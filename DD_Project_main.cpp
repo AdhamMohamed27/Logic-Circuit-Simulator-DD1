@@ -19,7 +19,7 @@ int main(){
         file.open(fileName);
         if (!file.is_open()) {
             cerr << "Error opening file: " << fileName << endl;
-            continue;
+
         
 
         vector<string> s;
@@ -29,4 +29,4 @@ int main(){
         }
         file.close();
     return 0;
-}
+}}
