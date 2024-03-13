@@ -1,0 +1,44 @@
+#include <iostream>
+#include <chrono>
+#include <thread>
+
+using namespace std;
+
+void Changing_truthValue(int variables[]) {
+    auto start = chrono::steady_clock::now();
+    int t = 5000; // 5000 milliseconds total duration
+    variables[0] = 0;
+    variables[1] = 0;
+    variables[2] = 0;
+
+    while (t > 0) {
+        auto end = chrono::steady_clock::now();
+        auto elapsed = chrono::duration_cast<chrono::milliseconds>(end - start).count();
+        if (elapsed == 500) { // 500 milliseconds
+            variables[0] = 1;
+            cout << "A= " << variables[0] << " at time: " << elapsed << " milliseconds" << endl;
+        } else if (elapsed == 800) { // 800 milliseconds
+            variables[1] = 1;
+            cout << "B= " << variables[1] << " at time: " << elapsed << " milliseconds" << endl;
+        } else if (elapsed == 1000) { // 1000 milliseconds
+            variables[2] = 1;
+            cout << "C= " << variables[2] << " at time: " << elapsed << " milliseconds" << endl;
+        } else if (elapsed == 1300) { // 1300 milliseconds
+            variables[0] = 1;
+            variables[1] = 0;
+            variables[2] = 1;
+            cout << "At time: " << elapsed << " milliseconds, The values are: " << "A=" << variables[0] << " ,B=" << variables[1] << " ,C=" << variables[2] << endl;
+        }
+        t = t - 1;
+
+        // Wait for 1 millisecond
+        this_thread::sleep_for(chrono::milliseconds(1));
+    }
+}
+
+int main() {
+    int A = 0, B = 0, C = 0; // Initialize A, B, C separately
+    int variables[] = {A, B, C};
+    Changing_truthValue(variables);
+    return 0;
+}
