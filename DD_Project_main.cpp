@@ -40,7 +40,7 @@ bool evaluateExpression(const string& expression,bool x, bool y) {
             // If the character is a variable, push its value onto the stack
             operands.push(x);
             operands.push(y);
-            // For simplicity, assuming all variables are true
+
         } else if (c == '(') {
             // Push opening parenthesis onto the operator stack
             operators.push(c);
