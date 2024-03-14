@@ -1,7 +1,6 @@
 #include <iostream>
 #include <fstream>
 #include <vector>
-#include <algorithm>
 #include <queue>
 #include <filesystem>
 #include <unordered_map>
@@ -11,11 +10,24 @@
 #include <thread>
 using namespace std;
 
+int safe_stoi(const std::string& str) {
+    if (str.empty()) {
+        throw std::invalid_argument("Empty string");
+    }
+    for (char c : str) {
+        if (!std::isdigit(c)) {
+            throw std::invalid_argument("Non-integer character");
+        }
+    }
+    return std::stoi(str);
+}
+
 struct Component  { // describe the specifics of each gate
     int numInputs;
     string outputExpression;
     int delayPs;
 };
+
 bool evaluateExpression(const string& expression,bool x, bool y) {
     stack<char> operators;
     stack<bool> operands;
@@ -97,16 +109,22 @@ bool evaluateExpression(const string& expression,bool x, bool y) {
 
     return operands.top();
 }
+
 int main() {
     unordered_map<char, bool> variable;
+    unordered_map<string, int> stim;
     vector<string> inputs; // The inputs of a test circuit
     int inputsc = -1; //number of inputs in a test circuit
-    unordered_map<string, Component> components; // Store the library file, Key : Gate name , Value : gate's specifics
+    unordered_map<string, Component> components;
+    int size = 5;// Store the library file, Key : Gate name , Value : gate's specifics
+    string evaluatedExpr[size];
+    int times[size];
     string folderPath, outputFilePath;
     cout << "Enter folder path containing test cases: ";
     getline(cin, folderPath);
     ifstream file;
     string fileName;
+
     for (const auto &entry: filesystem::directory_iterator(folderPath)) {
         fileName = entry.path().string();
         if (fileName.find(".lib") != std::string::npos) {
@@ -141,6 +159,39 @@ int main() {
     file.close();
 
 
+
+
+    for (const auto &entry : filesystem::directory_iterator(folderPath)) {
+        string fileName = entry.path().filename().string();  // Extract filename from path
+        if (fileName.find("stim") != std::string::npos) {    // Check if filename contains "stim"
+            ifstream files(entry.path());  // Open the file
+            if (!files.is_open()) {
+                cerr << "Error opening file: " << fileName << endl;
+                continue;
+            }
+
+            string line;
+            int index = 0;
+            while (getline(files, line)) {
+                stringstream ss(line);
+                string time1, name, value1;
+                if (getline(ss, time1, ',') && getline(ss, name, ',') && getline(ss, value1, ',')) {
+                    try {
+                        times[index] = safe_stoi(time1);
+                        int value = safe_stoi(value1);
+                        stim[name] = value;
+                        index++;
+                    } catch (const std::invalid_argument& e) {
+                        cerr << "Invalid argument in line: " << line << endl;
+                    }
+                }
+            }
+            files.close();
+        }
+    }
+
+
+
     ifstream fileC;
     string fileNameC;
     for (const auto &entry: filesystem::directory_iterator(folderPath)) {
@@ -170,18 +221,22 @@ int main() {
                 getline(ss, inputs[i], ',');
             }
 
+         int indexc=0;
             // replacing the inputs from the library file with the inputs from the circuit file in the output expression of the gate read from the circuit file
-            string evaluatedExpr = components[gate].outputExpression;
+    evaluatedExpr[indexc] = components[gate].outputExpression;
             for (int i = 0; i < components[gate].numInputs; i++) {
-                size_t pos = evaluatedExpr.find("i" + to_string(i + 1));
+                size_t pos = evaluatedExpr[indexc].find("i" + to_string(i + 1));
                 while (pos != string::npos) {
-                    evaluatedExpr.replace(pos, 2, inputs[i]);
-                    pos = evaluatedExpr.find("i" + to_string(i + 1), pos + 2);
+                    evaluatedExpr[indexc].replace(pos, 2, inputs[i]);
+                    pos = evaluatedExpr[indexc].find("i" + to_string(i + 1), pos + 2);
                 }
             }
-            cout << evaluatedExpr << endl;
-            cout << evaluateExpression(evaluatedExpr, 1, 0);
+            cout << "The expression is "<< evaluatedExpr[indexc] << endl;
+            int j=0;
 
+            cout <<"the result is "<<evaluateExpression(evaluatedExpr[indexc], stim[inputs[j]], stim[inputs[j+1]])<<endl;
+j++;
+            indexc++;
 
         }
 
@@ -189,47 +244,9 @@ int main() {
     }
     fileC.close();
 
-    ifstream files;
-    string fileNames;
-    int times[5];
-    for (const auto &entry: filesystem::directory_iterator(folderPath)) {
-        fileNames = entry.path().string();
-        if (fileNames.find(".lib") != std::string::npos) {
-            files.open(fileNames);
-            if (!files.is_open()) {
-                cerr << "Error opening file: " << fileNames << endl;
-                continue;
-            }
-        }
 
-        string line;
-        unordered_map<string, bool> stim;
-        int index = 0;
-        while (getline(files, line)) {
-
-        }
-        stringstream ss(line);
-
-        string name;
-        string time1, value1;
-        if (getline(ss, time1, ',') &&
-            getline(ss, name, ',') &&
-            getline(ss, value1, ',')
-                ) {
-
-            times[index] = std::stoi(time1);
-
-            int value = std::stoi(value1);
-            index++;
-            stim[name] = value;
-        }
-
-    }
-    file.close();
-
-
-// Function to evaluate the Boolean expression
-    int variables[3];
+// Function to handle time stamps
+    /*int variables[3];
 
     auto start = chrono::steady_clock::now();
     int t = 5000; // 5000 milliseconds total duration
@@ -262,5 +279,5 @@ int main() {
         // Wait for 1 millisecond
         this_thread::sleep_for(chrono::milliseconds(1));
 
-    }
+    }*/
 }
