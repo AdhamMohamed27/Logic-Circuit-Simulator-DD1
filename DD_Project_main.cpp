@@ -7,6 +7,8 @@
 #include <unordered_map>
 #include <string>
 #include <stack>
+#include <chrono>
+#include <thread>
 using namespace std;
 
 struct Component  { // describe the specifics of each gate
@@ -14,7 +16,7 @@ struct Component  { // describe the specifics of each gate
     string outputExpression;
     int delayPs;
 };
-bool evaluateExpression(const string& expression) {
+bool evaluateExpression(const string& expression,bool x, bool y) {
     stack<char> operators;
     stack<bool> operands;
 
@@ -24,7 +26,8 @@ bool evaluateExpression(const string& expression) {
             continue;
         } else if (isalpha(c)) {
             // If the character is a variable, push its value onto the stack
-            operands.push(true);
+            operands.push(x);
+            operands.push(y);
             // For simplicity, assuming all variables are true
         } else if (c == '(') {
             // Push opening parenthesis onto the operator stack
@@ -96,8 +99,8 @@ bool evaluateExpression(const string& expression) {
 }
 int main() {
     unordered_map<char, bool> variable;
-    vector<string>inputs; // The inputs of a test circuit
-    int inputsc=-1; //number of inputs in a test circuit
+    vector<string> inputs; // The inputs of a test circuit
+    int inputsc = -1; //number of inputs in a test circuit
     unordered_map<string, Component> components; // Store the library file, Key : Gate name , Value : gate's specifics
     string folderPath, outputFilePath;
     cout << "Enter folder path containing test cases: ";
@@ -111,7 +114,8 @@ int main() {
             if (!file.is_open()) {
                 cerr << "Error opening file: " << fileName << endl;
                 continue;
-            }}
+            }
+        }
 
         string line;
         while (getline(file, line)) {
@@ -119,20 +123,22 @@ int main() {
             string name, outputExpr;
             string snumInputs, sdelay;
             if (getline(ss, name, ',') &&
-            getline(ss, snumInputs, ',')&&
+                getline(ss, snumInputs, ',') &&
                 getline(ss, outputExpr, ',')
-                &&getline(ss, sdelay, ',')) {
+                && getline(ss, sdelay, ',')) {
                 int numInputs = std::stoi(snumInputs);
                 int delay = std::stoi(sdelay);
                 components[name] = {numInputs, outputExpr, delay};
 
-        }}
+            }
+        }
         //Printing the map for testing
-       // for (auto it = components.begin(); it != components.end(); ++it) {
+        // for (auto it = components.begin(); it != components.end(); ++it) {
 
-     // cout << "Gate: " << it->first << ", Specifics: " << it->second.numInputs<<'\t'<<it->second.outputExpression <<'\t'<< it->second.delayPs << endl;
-       // }
-    } file.close();
+        // cout << "Gate: " << it->first << ", Specifics: " << it->second.numInputs<<'\t'<<it->second.outputExpression <<'\t'<< it->second.delayPs << endl;
+        // }
+    }
+    file.close();
 
 
     ifstream fileC;
@@ -144,45 +150,117 @@ int main() {
             if (!fileC.is_open()) {
                 cerr << "Error opening file: " << fileNameC << endl;
                 continue;
-            }}
+            }
+        }
         string lineC;
         getline(fileC, lineC);
-        while (getline(fileC, lineC)&&lineC!="COMPONENTS:") {
+        while (getline(fileC, lineC) && lineC != "COMPONENTS:") {
 
             inputsc++;               // count the inputs
         }
 
-        while (getline(fileC, lineC)){
+        while (getline(fileC, lineC)) {
             stringstream ss(lineC);
 
-            string gate,inputs[inputsc],output;
+            string gate, inputs[inputsc], output;
 
-           getline(ss, gate, ',');
+            getline(ss, gate, ',');
             getline(ss, output, ',');
-           for(int i=0;i<inputsc;i++){
-               getline(ss, inputs[i], ',');}
+            for (int i = 0; i < inputsc; i++) {
+                getline(ss, inputs[i], ',');
+            }
 
             // replacing the inputs from the library file with the inputs from the circuit file in the output expression of the gate read from the circuit file
-           string evaluatedExpr=components[gate].outputExpression;
-                   for (int i=0;i<components[gate].numInputs;i++){
-                    size_t pos = evaluatedExpr.find("i"+ to_string(i+1));
-                    while (pos != string::npos) {
-                        evaluatedExpr.replace(pos, 2, inputs[i]);
-                        pos = evaluatedExpr.find("i" + to_string(i + 1), pos + 2);
-                    }}
-                        cout << evaluatedExpr << endl;
-            cout<<evaluateExpression(evaluatedExpr);
-
-
-
+            string evaluatedExpr = components[gate].outputExpression;
+            for (int i = 0; i < components[gate].numInputs; i++) {
+                size_t pos = evaluatedExpr.find("i" + to_string(i + 1));
+                while (pos != string::npos) {
+                    evaluatedExpr.replace(pos, 2, inputs[i]);
+                    pos = evaluatedExpr.find("i" + to_string(i + 1), pos + 2);
+                }
+            }
+            cout << evaluatedExpr << endl;
+            cout << evaluateExpression(evaluatedExpr, 1, 0);
 
 
         }
 
 
+    }
+    fileC.close();
 
-        }fileC.close();}
+    ifstream files;
+    string fileNames;
+    int times[5];
+    for (const auto &entry: filesystem::directory_iterator(folderPath)) {
+        fileNames = entry.path().string();
+        if (fileNames.find(".lib") != std::string::npos) {
+            files.open(fileNames);
+            if (!files.is_open()) {
+                cerr << "Error opening file: " << fileNames << endl;
+                continue;
+            }
+        }
+
+        string line;
+        unordered_map<string, bool> stim;
+        int index = 0;
+        while (getline(files, line)) {
+
+        }
+        stringstream ss(line);
+
+        string name;
+        string time1, value1;
+        if (getline(ss, time1, ',') &&
+            getline(ss, name, ',') &&
+            getline(ss, value1, ',')
+                ) {
+
+            times[index] = std::stoi(time1);
+
+            int value = std::stoi(value1);
+            index++;
+            stim[name] = value;
+        }
+
+    }
+    file.close();
+
 
 // Function to evaluate the Boolean expression
+    int variables[3];
+
+    auto start = chrono::steady_clock::now();
+    int t = 5000; // 5000 milliseconds total duration
+    variables[0] = 0;
+    variables[1] = 0;
+    variables[2] = 0;
 
 
+    while (t > 0) {
+        auto end = chrono::steady_clock::now();
+        auto elapsed = chrono::duration_cast<chrono::milliseconds>(end - start).count();
+        if (elapsed == times[0]) { // 500 milliseconds
+            variables[0] = 1;
+            cout << "A= " << variables[0] << " at time: " << elapsed << " milliseconds" << endl;
+        } else if (elapsed == times[1]) { // 800 milliseconds
+            variables[1] = 1;
+            cout << "B= " << variables[1] << " at time: " << elapsed << " milliseconds" << endl;
+        } else if (elapsed == times[2]) { // 1000 milliseconds
+            variables[2] = 1;
+            cout << "C= " << variables[2] << " at time: " << elapsed << " milliseconds" << endl;
+        } else if (elapsed == times[3]) { // 1300 milliseconds
+            variables[0] = 1;
+            variables[1] = 0;
+            variables[2] = 1;
+            cout << "At time: " << elapsed << " milliseconds, The values are: " << "A=" << variables[0] << " ,B="
+                 << variables[1] << " ,C=" << variables[2] << endl;
+        }
+        t = t - 1;
+
+        // Wait for 1 millisecond
+        this_thread::sleep_for(chrono::milliseconds(1));
+
+    }
+}
