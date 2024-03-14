@@ -6,6 +6,7 @@
 #include <filesystem>
 #include <unordered_map>
 #include <string>
+#include <stack>
 using namespace std;
 
 struct Component  { // describe the specifics of each gate
@@ -13,8 +14,88 @@ struct Component  { // describe the specifics of each gate
     string outputExpression;
     int delayPs;
 };
+bool evaluateExpression(const string& expression) {
+    stack<char> operators;
+    stack<bool> operands;
 
+    for (char c : expression) {
+        if (isspace(c)) {
+            // Ignore whitespace
+            continue;
+        } else if (isalpha(c)) {
+            // If the character is a variable, push its value onto the stack
+            operands.push(true);
+            // For simplicity, assuming all variables are true
+        } else if (c == '(') {
+            // Push opening parenthesis onto the operator stack
+            operators.push(c);
+        } else if (c == ')') {
+            // Evaluate until the corresponding opening parenthesis
+            while (!operators.empty() && operators.top() != '(') {
+                char op = operators.top();
+                operators.pop();
+                bool operand2 = operands.top();
+                operands.pop();
+                bool operand1 = operands.top();
+                operands.pop();
+
+                if (op == '&') {
+                    operands.push(operand1 && operand2);
+                } else if (op == '|') {
+                    operands.push(operand1 || operand2);
+                } else if (op == '~') {
+                    operands.push(!operand2);
+                }
+            }
+            // Remove the opening parenthesis
+            operators.pop();
+        } else if (c == '&' || c == '|' || c == '~') {
+            // Operator encountered
+            while (!operators.empty() && operators.top() != '(' &&
+                   ((c == '~' && operators.top() == '~') ||
+                    (c != '~' && (operators.top() == '&' || operators.top() == '|')))) {
+                char op = operators.top();
+                operators.pop();
+                bool operand2 = operands.top();
+                operands.pop();
+                bool operand1 = operands.top();
+                operands.pop();
+
+                if (op == '&') {
+                    operands.push(operand1 && operand2);
+                } else if (op == '|') {
+                    operands.push(operand1 || operand2);
+                } else if (op == '~') {
+                    operands.push(!operand2);
+                }
+            }
+            // Push the current operator onto the stack
+            operators.push(c);
+        }
+    }
+
+    // Evaluate remaining operators
+    while (!operators.empty()) {
+        char op = operators.top();
+        operators.pop();
+        bool operand2 = operands.top();
+        operands.pop();
+        bool operand1 = operands.top();
+        operands.pop();
+
+        if (op == '&') {
+            operands.push(operand1 && operand2);
+        } else if (op == '|') {
+            operands.push(operand1 || operand2);
+        } else if (op == '~') {
+            operands.push(!operand2);
+        }
+    }
+
+    return operands.top();
+}
 int main() {
+    unordered_map<char, bool> variable;
     vector<string>inputs; // The inputs of a test circuit
     int inputsc=-1; //number of inputs in a test circuit
     unordered_map<string, Component> components; // Store the library file, Key : Gate name , Value : gate's specifics
@@ -90,6 +171,8 @@ int main() {
                         pos = evaluatedExpr.find("i" + to_string(i + 1), pos + 2);
                     }}
                         cout << evaluatedExpr << endl;
+            cout<<evaluateExpression(evaluatedExpr);
+
 
 
 
@@ -99,3 +182,7 @@ int main() {
 
 
         }fileC.close();}
+
+// Function to evaluate the Boolean expression
+
+
