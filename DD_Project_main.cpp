@@ -8,6 +8,7 @@
 #include <stack>
 #include <chrono>
 #include <thread>
+#include <sstream>
 using namespace std;
 
 int safe_stoi(const std::string& str) {
@@ -31,6 +32,7 @@ struct Component  { // describe the specifics of each gate
 bool evaluateExpression(const string& expression,bool x, bool y) {
     stack<char> operators;
     stack<bool> operands;
+
 
     for (char c : expression) {
         if (isspace(c)) {
@@ -56,6 +58,7 @@ bool evaluateExpression(const string& expression,bool x, bool y) {
 
                 if (op == '&') {
                     operands.push(operand1 && operand2);
+                    
                 } else if (op == '|') {
                     operands.push(operand1 || operand2);
                 } else if (op == '~') {
@@ -108,6 +111,15 @@ bool evaluateExpression(const string& expression,bool x, bool y) {
     }
 
     return operands.top();
+}
+
+int Delay(unordered_map<string, Component> Map, string Gate_Arr[],int size){
+    int Delay=0;
+    for (int i=0;i<size;i++)
+    {
+        Delay=Delay+Map[Gate_Arr[i]].delayPs;
+    }
+    return Delay;
 }
 
 int main() {
@@ -213,18 +225,20 @@ int main() {
         while (getline(fileC, lineC)) {
             stringstream ss(lineC);
 
-            string gate, inputs[inputsc], output;
+            string gate[]={}, inputs[inputsc], output;
+            int i=0;
 
-            getline(ss, gate, ',');
+            getline(ss, gate[i], ',');
             getline(ss, output, ',');
             for (int i = 0; i < inputsc; i++) {
                 getline(ss, inputs[i], ',');
             }
 
+            
          int indexc=0;
             // replacing the inputs from the library file with the inputs from the circuit file in the output expression of the gate read from the circuit file
-    evaluatedExpr[indexc] = components[gate].outputExpression;
-            for (int i = 0; i < components[gate].numInputs; i++) {
+    evaluatedExpr[indexc] = components[gate[i]].outputExpression;
+            for (int i = 0; i < components[gate[i]].numInputs; i++) {
                 size_t pos = evaluatedExpr[indexc].find("i" + to_string(i + 1));
                 while (pos != string::npos) {
                     evaluatedExpr[indexc].replace(pos, 2, inputs[i]);
@@ -235,8 +249,9 @@ int main() {
             int j=0;
 
             cout <<"the result is "<<evaluateExpression(evaluatedExpr[indexc], stim[inputs[j]], stim[inputs[j+1]])<<endl;
-j++;
+            j++;
             indexc++;
+            i++;
 
         }
 
@@ -253,6 +268,8 @@ j++;
     variables[0] = 0;
     variables[1] = 0;
     variables[2] = 0;
+    time-0;
+    
 
 
     while (t > 0) {
@@ -261,9 +278,10 @@ j++;
         if (elapsed == times[0]) { // 500 milliseconds
             variables[0] = 1;
             cout << "A= " << variables[0] << " at time: " << elapsed << " milliseconds" << endl;
-        } else if (elapsed == times[1]) { // 800 milliseconds
+        } else if (elapsed == times+Delay { // 800 milliseconds
             variables[1] = 1;
             cout << "B= " << variables[1] << " at time: " << elapsed << " milliseconds" << endl;
+            //call the functions
         } else if (elapsed == times[2]) { // 1000 milliseconds
             variables[2] = 1;
             cout << "C= " << variables[2] << " at time: " << elapsed << " milliseconds" << endl;
