@@ -169,7 +169,8 @@ void readCircuitFile(const string& filePath, const unordered_map<string, Compone
         }
 
         if (readingInputs) {
-            inputs.insert(line); // Store input variable
+            // Store input variable
+            inputs.insert(line);
         } else {
             stringstream ss(line);
             string gateName, gateType, outputName;
@@ -177,14 +178,16 @@ void readCircuitFile(const string& filePath, const unordered_map<string, Compone
             getline(ss, gateType, ',');
             getline(ss, outputName, ',');
 
-            string inputs;
-            while (getline(ss, inputs, ',')) {
+            string inputsStr;
+            while (getline(ss, inputsStr, ',')) {
                 gateName = trim(gateName);
                 gateType = trim(gateType);
                 outputName = trim(outputName);
+                inputsStr = trim(inputsStr);
 
                 if (components.find(gateType) != components.end()) {
-                    gates[outputName] = gateName;
+                    // Use input as key and output as value
+                    gates[inputsStr] = outputName;
                 } else {
                     cerr << "Gate type '" << gateType << "' not found in components map." << endl;
                 }
@@ -210,7 +213,8 @@ void readSimulationFile(const string& filePath, unordered_map<int, unordered_map
                 int time = safe_stoi(timeStr);
                 int value = safe_stoi(valueStr);
                 simInputs[time][variable] = value;
-            } catch (const std::invalid_argument& e) {
+            } catch (const std::invalid_argument& e)
+            {
                 cerr << "Invalid argument in line: " << line << endl;
             }
         }
@@ -218,7 +222,7 @@ void readSimulationFile(const string& filePath, unordered_map<int, unordered_map
     file.close();
 }
 
-void generateSimulationOutput(const unordered_map<string, string>& gates, const unordered_map<int, unordered_map<string, int>>& simInputs, const string& outputPath) {
+void generateSimulationOutput(const unordered_map<string, string>& gates, unordered_map<string, int>& lastInputValues, const unordered_map<int, unordered_map<string, int>>& simInputs, const string& outputPath) {
     ofstream outputFile(outputPath);
     if (!outputFile.is_open()) {
         cerr << "Error opening output file: " << outputPath << endl;
@@ -232,7 +236,12 @@ void generateSimulationOutput(const unordered_map<string, string>& gates, const 
         for (const auto& gate : gates) {
             const string& varName = gate.first;
             if (variables.find(varName) == variables.end()) {
-                outputFile << timestamp << "," << varName << ",0" << endl; // Default value is 0
+                if (lastInputValues.find(varName) != lastInputValues.end()) {
+                    // Use last known value of input if not provided in this simulation
+                    outputFile << timestamp << "," << varName << "," << lastInputValues[varName] << endl;
+                } else {
+                    outputFile << timestamp << "," << varName << ",0" << endl; // Default value is 0
+                }
             }
         }
 
@@ -248,6 +257,15 @@ void generateSimulationOutput(const unordered_map<string, string>& gates, const 
                 cerr << "Variable '" << varName << "' not found in gates map." << endl;
             }
         }
+
+
+        // Update last known values of inputs
+        for (const auto& input : lastInputValues) {
+            if (variables.find(input.first) != variables.end()) {
+                lastInputValues[input.first] = variables.at(input.first);
+            }
+        }
+
     }
     outputFile.close();
 }
@@ -259,13 +277,13 @@ int main() {
     readLibraryFile(folderPath + "/T5.lib", components,inputs);
 
     unordered_map<string, string> gates;
+    unordered_map<string, int> lastInputValues;
 
     readCircuitFile(folderPath + "/T5.cir", components, gates,inputs);
-
     unordered_map<int, unordered_map<string, int>> simInputs;
     readSimulationFile(folderPath + "/T5.stim", simInputs);
 
-    generateSimulationOutput(gates, simInputs, folderPath + "/T5.sim");
+    generateSimulationOutput(gates, lastInputValues, simInputs, folderPath + "/T5.sim");
 
     return 0;
 }
