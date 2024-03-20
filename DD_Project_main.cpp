@@ -14,6 +14,12 @@ struct Component {
     string outputExpression;
     int delayPs;
 };
+struct gateinputs{
+    int in1,in2;
+};
+struct variablesnames{
+    string  v1,v2;
+};
 
 int safe_stoi(const std::string& str) {
     if (str.empty()) {
@@ -222,6 +228,7 @@ void readSimulationFile(const string& filePath, unordered_map<int, unordered_map
     file.close();
 }
 
+
 void generateSimulationOutput(const unordered_map<string, string>& gates, unordered_map<string, int>& lastInputValues, const unordered_map<int, unordered_map<string, int>>& simInputs, const string& outputPath) {
     ofstream outputFile(outputPath);
     if (!outputFile.is_open()) {
@@ -233,6 +240,7 @@ void generateSimulationOutput(const unordered_map<string, string>& gates, unorde
         int timestamp = simInput.first;
         const auto& variables = simInput.second;
 
+        // Write inputs and default values
         for (const auto& gate : gates) {
             const string& varName = gate.first;
             if (variables.find(varName) == variables.end()) {
@@ -245,30 +253,37 @@ void generateSimulationOutput(const unordered_map<string, string>& gates, unorde
             }
         }
 
+        // Evaluate gates
         for (const auto& variable : variables) {
             const string& varName = variable.first;
             int varValue = variable.second;
 
+            // Check if the variable is present in the gates map
             if (gates.find(varName) != gates.end()) {
                 const string& expression = gates.at(varName);
-                bool result = evaluateExpression(expression, varValue, varValue);
-                outputFile << timestamp << "," << varName << "," << result << endl;
+                // Evaluate the gate expression
+                bool result = evaluateExpression(expression, varValue, lastInputValues["B"]); // Assuming "secondVariable" is the name of the second input variable
+                // Output the result
+                outputFile << timestamp << "," << varName << "," << (result ? 1 : 0) << endl; // Writing 1 or 0 for boolean result
             } else {
+                // If the variable is not found in the gates map, output an error message
                 cerr << "Variable '" << varName << "' not found in gates map." << endl;
             }
         }
 
 
         // Update last known values of inputs
-        for (const auto& input : lastInputValues) {
-            if (variables.find(input.first) != variables.end()) {
-                lastInputValues[input.first] = variables.at(input.first);
+        for (const auto& input : variables) {
+            if (lastInputValues.find(input.first) != lastInputValues.end()) {
+                lastInputValues[input.first] = input.second;
             }
         }
-
     }
+
     outputFile.close();
 }
+
+
 
 int main() {
     string folderPath = "D:\\spring 24\\DD1 project\\Logic-Circuit-Simulator-DD1\\Test_Case_5"; // Update with the path to your folder containing input files
