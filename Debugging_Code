@@ -1,0 +1,29 @@
+int main() {
+    string folderPath = "Test_Case-4"; // Update with the path to your folder containing input files
+    unordered_set<string> inputs;
+    unordered_map<string, Component> components;
+    readLibraryFile(folderPath + "/T5.lib", components, inputs);
+
+    unordered_map<string, string> gates;
+    unordered_map<string, int> lastInputValues;
+
+    readCircuitFile(folderPath + "/T5.cir", components, gates, inputs);
+    cout << "Gates:" << endl;
+    for (const auto& gate : gates) {
+        cout << gate.first << " -> " << gate.second << endl;
+    }
+
+    unordered_map<int, unordered_map<string, int>> simInputs;
+    readSimulationFile(folderPath + "/T5.stim", simInputs);
+    cout << "Simulation Inputs:" << endl;
+    for (const auto& simInput : simInputs) {
+        cout << "Time: " << simInput.first << endl;
+        for (const auto& variable : simInput.second) {
+            cout << variable.first << " -> " << variable.second << endl;
+        }
+    }
+
+    generateSimulationOutput(gates, lastInputValues, simInputs, folderPath + "/T5.sim");
+
+    return 0;
+}
