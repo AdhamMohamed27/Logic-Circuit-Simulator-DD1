@@ -7,31 +7,24 @@ on:
 
 jobs:
   build:
-    runs-on: ubuntu-latest
+    runs-on: windows-latest
 
     steps:
       - uses: actions/checkout@v2
 
-      - name: Set up CMake
-        uses: lukka/run-cmake@v2
+      - name: Install CMake
+        uses: microsoft/vs-build-tools/setup-cmake@v1
         with:
-          cmakeListsOrSettingsJsonPath: '.'
-          buildDir: 'build'
+          cmake-version: '3.21.x'
 
       - name: Build
-        run: cmake --build build --config Release
+        run: |
+          mkdir build
+          cd build
+          cmake ..
+          cmake --build .
 
       - name: Test
-        run: cmake --build build --target test
-         
-      - name: Set up CMake
-        uses: lukka/run-cmake@v2
-        with:
-            cmakeListsTxtPath: 'src'
-            buildDir: 'build'
-
-      - name: Upload Test Results
-        uses: actions/upload-artifact@v2
-        with:
-          name: test-results
-          path: build/Testing/Temporary/LastTest.log
+        run: |
+          cd build
+          ctest --output-on-failure
