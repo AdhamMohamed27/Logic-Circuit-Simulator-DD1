@@ -1,0 +1,31 @@
+name: Build and Test
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Set up CMake
+        uses: lukka/run-cmake@v2
+        with:
+          cmakeListsOrSettingsJsonPath: '.'
+          buildDir: 'build'
+
+      - name: Build
+        run: cmake --build build --config Release
+
+      - name: Test
+        run: cmake --build build --target test
+
+      - name: Upload Test Results
+        uses: actions/upload-artifact@v2
+        with:
+          name: test-results
+          path: build/Testing/Temporary/LastTest.log
