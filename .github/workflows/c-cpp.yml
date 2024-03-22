@@ -23,6 +23,12 @@ jobs:
 
       - name: Test
         run: cmake --build build --target test
+         
+      - name: Set up CMake
+        uses: lukka/run-cmake@v2
+        with:
+            cmakeListsTxtPath: 'src'
+            buildDir: 'build'
 
       - name: Upload Test Results
         uses: actions/upload-artifact@v2
