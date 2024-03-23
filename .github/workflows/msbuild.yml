@@ -13,9 +13,7 @@ jobs:
           tar -xf cmake.zip -C cmake --strip-components=1
 
       - name: Restore NuGet packages
-        run: |
-          cd src  # Assuming the solution file is in the 'src' directory
-          nuget restore
+        run: nuget restore
 
       - name: Configure and Build
         run: |
