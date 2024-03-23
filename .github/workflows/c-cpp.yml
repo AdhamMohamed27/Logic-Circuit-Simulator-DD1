@@ -1,4 +1,4 @@
-name: Locgic-Circuit-Simulator-DD1
+name: Logic-Circuit-Simulator-DD1
 on: [push]
 jobs:
   build:
