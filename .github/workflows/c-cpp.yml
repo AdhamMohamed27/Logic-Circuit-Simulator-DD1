@@ -7,7 +7,7 @@ jobs:
       - uses: actions/checkout@v2
 
       - name: Install CMake
-        uses: kitware/setup-cmake@v1
+        uses: cmake/setup-cmake@v2
         with:
           cmake-version: '3.21.x'
 
