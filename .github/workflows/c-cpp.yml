@@ -14,7 +14,7 @@ jobs:
 
       - name: Add CMake to PATH
         run: |
-          echo "##[add-path]$(pwd)/cmake/bin"
+          echo "D:\a\Logic-Circuit-Simulator-DD1\Logic-Circuit-Simulator-DD1\cmake\bin" >> $GITHUB_PATH
 
       - name: Verify CMake installation
         run: cmake --version
