@@ -13,7 +13,7 @@ jobs:
           tar -xf cmake.zip -C cmake --strip-components=1
 
       - name: Change to source directory
-        run: cd src
+        run: cd DD_Project_main.cpp
 
 
       - name: Configure CMake
