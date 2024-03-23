@@ -6,10 +6,18 @@ jobs:
     steps:
       - uses: actions/checkout@v2
 
-      - name: Install CMake
-        uses: cmake/setup-cmake@v2
-        with:
-          cmake-version: '3.21.x'
+      - name: Download CMake
+        run: |
+          curl -L -o cmake.zip https://github.com/Kitware/CMake/releases/download/v3.21.3/cmake-3.21.3-windows-x86_64.zip
+          mkdir cmake
+          tar -xf cmake.zip -C cmake --strip-components=1
+
+      - name: Add CMake to PATH
+        run: |
+          echo "##[add-path]$(pwd)/cmake/bin"
+
+      - name: Verify CMake installation
+        run: cmake --version
 
       - name: Build
         run: |
