@@ -12,19 +12,18 @@ jobs:
           mkdir cmake
           tar -xf cmake.zip -C cmake --strip-components=1
 
-      - name: Add CMake to PATH
-        run: |
-          echo "D:\a\Logic-Circuit-Simulator-DD1\Logic-Circuit-Simulator-DD1\cmake\bin" >> $GITHUB_PATH
+      - name: Change to source directory
+        run: cd src
 
-      - name: Verify CMake installation
-        run: cmake --version
-
-      - name: Build
+      - name: Configure CMake
         run: |
           mkdir build
           cd build
           cmake ..
-          cmake --build .
+          
+      - name: Build
+        run: |
+          cmake --build build
 
       - name: Test
         run: |
