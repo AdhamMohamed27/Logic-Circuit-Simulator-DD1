@@ -13,7 +13,7 @@ jobs:
           tar -xf cmake.zip -C cmake --strip-components=1
 
       - name: Change to source directory
-        run: cd Logic-Circuit-Simulator-DD1
+        run: cd main
 
 
       - name: Configure CMake
