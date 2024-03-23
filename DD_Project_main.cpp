@@ -69,28 +69,22 @@ bool evaluateExpression(bool input1, bool input2, const string& gate) {
 
 // Function to read library file and populate components map
 void readLibraryFile(const string& filePath, unordered_map<string, Component>& components, vector<string>& inputs,unordered_map<string, int> &delays) {
+    string line;
+    int i=0;
     ifstream file(filePath);
     if (!file.is_open()) {
         cerr << "Error opening library file: " << filePath << endl;
         return;
     }
-
-    string line;
-    int i=0;
-
     while (getline(file, line)) {
         stringstream ss(line);
         string name, numInputsStr, outputExpr, delayStr,in1,in2,gateName;
         if (getline(ss, name, ',') && getline(ss, numInputsStr, ',') &&
             getline(ss, outputExpr, ',') && getline(ss, delayStr, ',')) {
             try {
-                int numInputs = safe_stoi(numInputsStr);
                 int delay = safe_stoi(delayStr);
                 delays[name]=delay;
-               // cout<<delay;
-
-gateName = "G" + std::to_string(i);
-
+                gateName = "G" + std::to_string(i);
                 components[gateName] = { in1,in2,outputExpr, delays[name],name};
                 i++;
             } catch (const std::invalid_argument& e) {
@@ -157,8 +151,8 @@ void readCircuitFile(const string& filePath, unordered_map<string, Component>& c
 
             // Store the inputs for each gate in the components map
 
-            components[gateName] = {input1, input2, outputName, delays[gateType],gateType};
-//cout<<components[gateName].input1<<endl;
+            components[gateName] = {input1, input2, outputName, delays[gateType], gateType};
+
             // Check if gateType exists in components map
             if (!input1.empty()) {
                 dependencies[outputName].insert(input1);
@@ -176,15 +170,7 @@ void readCircuitFile(const string& filePath, unordered_map<string, Component>& c
         }
     }
     file.close();
-    for (const auto& [output, inputs] : dependencies) {
-        cout << "Component '" << output << "' depends on: ";
-        for (const auto& input : inputs) {
-            cout << input << " ";
-        }
-        cout << endl;
-    }
 }
-
 
 
 // Function to read simulation file and populate simInputs vector
@@ -269,7 +255,7 @@ void generateSimulationOutput(const unordered_map<string, string>& gates,  unord
 
         // Update input values if provided in the simulation inputs
         for (const auto& input : variables) {
-          //  cout<<input.first<<input.second;
+
             const string& inputName = input.first;
             lastInputValues[inputName] = input.second;
 
@@ -284,26 +270,23 @@ void generateSimulationOutput(const unordered_map<string, string>& gates,  unord
         }
 
         int  time;
-        // Evaluate gate outputs in the order they appear in the circuit file
+
         for ( auto& componentName : componentOrder) {
             Component component;
              string outputName = componentName;
-           //cout<<outputName<<endl;
              string gateType = gates.at(componentName);
-            cout<<gateType;
             auto it = components.find(gateType);
             if (it != components.end()) {
                  component = it->second;
-                cout<<component.gateType<<" ";
-                 cout<<component.delayPs<<" ";
-               //  cout<<component.outputExpression;
+
+
             } else {
                 // Handle the case where `gateType` is not found in components
                 cerr << "Gate type '" << gateType << "' not found in components map." << endl;
             }
 
             // Get input values for the gate
-            // cout<<"in "<<component.input2<<" ";
+
             bool input1Value = lastInputValues[component.input1];
 
             bool input2Value = lastInputValues[component.input2];
@@ -315,12 +298,6 @@ void generateSimulationOutput(const unordered_map<string, string>& gates,  unord
             if (dependencies.count(component.input1) > 0 || dependencies.count(component.input2) > 0) {
                 // Calculate delay for the current component considering dependencies
                 timestamp += component.delayPs;
-
-
-            // Calculate delay for the current component considering dependencies
-
-
-
             // Output the value of the gate with delay
             outputFile << timestamp << "," << outputName << "," << result << endl;
 
@@ -328,8 +305,6 @@ void generateSimulationOutput(const unordered_map<string, string>& gates,  unord
             lastInputValues[outputName] = result;
         }
     else{   time=timestamp + component.delayPs;
-
-
         // Output the value of the gate with delay
         outputFile << time << "," << outputName << "," << result << endl;
 
@@ -345,7 +320,22 @@ void generateSimulationOutput(const unordered_map<string, string>& gates,  unord
 
 
 int main() {
-    string folderPath = "D:\\spring 24\\DD1 project\\Logic-Circuit-Simulator-DD1\\Test_Case_1"; // Update with the path to your folder containing input files
+
+    string folderPath;
+    string lib;
+    string circ;
+    string stim;
+    string sim;
+
+    cout<<"Enter library file path: ";
+    getline(cin,lib);
+    cout<<"Enter Circuit file path: ";
+  getline(cin,circ);
+    cout<<"Enter stim file path: ";
+    getline(cin,stim);
+    cout<<"Enter sim file path: ";
+    getline(cin,sim);
+
     vector<string> inputs;
     unordered_map<string, Component> components;
     unordered_map<string, string> gates;
@@ -353,11 +343,11 @@ int main() {
     unordered_map<string, int> delays;;
     unordered_map<string, unordered_set<string>> dependencies;
 
-    readLibraryFile(folderPath + "/T1.lib", components, inputs,delays);
-    readCircuitFile(folderPath + "/T1.cir", components, gates, inputs,delays,dependencies);
-    readSimulationFile(folderPath + "/T1.stim", simInputs);
+    readLibraryFile(lib, components, inputs,delays);
+    readCircuitFile(circ, components, gates, inputs,delays,dependencies);
+    readSimulationFile(stim, simInputs);
 
-    generateSimulationOutput(gates, components, simInputs, folderPath + "/T1.sim",inputs,dependencies);
+    generateSimulationOutput(gates, components, simInputs,   sim,inputs,dependencies);
 
     return 0;
 }
