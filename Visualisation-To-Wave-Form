@@ -1,0 +1,68 @@
+import matplotlib.pyplot as plt
+
+# Initialize lists to store multiple sets of labels and values
+all_labels = []
+all_values = []
+
+# Initialize current set of labels and values
+labels = []
+values = []
+
+with open('T3.sim.rtf', 'r') as file:
+    lines = file.readlines()
+
+import matplotlib.pyplot as plt
+
+# Initialize lists to store multiple sets of labels and values
+all_labels = []
+all_values = []
+
+# Sample data (comment out or remove this if you want to use data from the file)
+# labels = ['A', 'B', 'C', 'D', 'E']
+# values = [10, 20, 30, 40, 50]
+
+with open('T3.sim.rtf', 'r') as file:
+    lines = file.readlines()
+
+    # Initialize current set of labels and values
+    labels = []
+    values = []
+
+    for line in lines:
+        parts = line.strip().split(',')  # Assuming comma-separated values
+        if len(parts) >= 2:
+            label = parts[0]
+            value_str = parts[1]
+            try:
+                value = float(value_str)
+                # Append label and value to current set of labels and values
+                labels.append(label)
+                values.append(value)
+            except ValueError:
+                print(f"Ignoring line: {line.strip()} because '{value_str}' is not a valid float")
+        
+        # If line contains a different label, start a new set of labels and values
+        else:
+            if len(labels) > 0:
+                all_labels.append(labels)
+                all_values.append(values)
+            labels = []
+            values = []
+
+    # Append the last set of labels and values
+    if len(labels) > 0:
+        all_labels.append(labels)
+        all_values.append(values)
+
+# Now you can proceed with visualizing the data using matplotlib
+plt.figure(figsize=(10, 6))
+
+for labels, values in zip(all_labels, all_values):
+    plt.plot(labels, values, marker='o')
+
+plt.xlabel('Time')
+plt.ylabel('Value')
+plt.title('Multiple Lines Waveform Plot')
+plt.grid(True)
+plt.legend([f"Line {i+1}" for i in range(len(all_labels))])  # Add legend for each line
+plt.show()
