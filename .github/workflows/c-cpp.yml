@@ -15,6 +15,5 @@ jobs:
       - name: Configure and Build
         run: |
           mkdir build
-          cd build
-          cmake -S .. -B .
-          cmake --build .
+          cmake -S . -B build
+          cmake --build build
