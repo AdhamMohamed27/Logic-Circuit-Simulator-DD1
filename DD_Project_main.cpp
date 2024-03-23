@@ -7,7 +7,6 @@
 #include <cctype>
 #include <stdexcept>
 #include <vector>
-#include <utility> // for std::pair
 #include <algorithm> // for std::for_each
 
 using namespace std;
