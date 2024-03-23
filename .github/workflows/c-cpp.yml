@@ -12,8 +12,7 @@ jobs:
           mkdir cmake
           tar -xf cmake.zip -C cmake --strip-components=1
 
-      - name: Change to source directory
-        run: 
+
 
 
       - name: Configure CMake
