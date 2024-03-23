@@ -13,7 +13,7 @@ jobs:
           tar -xf cmake.zip -C cmake --strip-components=1
 
       - name: Change to source directory
-        run: cd D:\a\Logic-Circuit-Simulator-DD1\main
+        run: cd Test_Case_1
 
       - name: Configure CMake
         run: |
