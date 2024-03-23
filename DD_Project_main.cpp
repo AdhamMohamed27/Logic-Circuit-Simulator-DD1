@@ -319,6 +319,8 @@ void generateSimulationOutput(const unordered_map<string, string>& gates,  unord
 }
 
 
+
+
 int main() {
 
     string folderPath;
@@ -326,6 +328,7 @@ int main() {
     string circ;
     string stim;
     string sim;
+    vector<int> timestamps;
 
     cout<<"Enter library file path: ";
     getline(cin,lib);
@@ -348,6 +351,7 @@ int main() {
     readSimulationFile(stim, simInputs);
 
     generateSimulationOutput(gates, components, simInputs,   sim,inputs,dependencies);
+
 
     return 0;
 }

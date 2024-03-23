@@ -1,0 +1,4 @@
+set xlabel 'Time'
+set ylabel 'Value'
+set title 'Simulation Output Waveforms'
+plot '-' with linespoints title 'A', '-' with linespoints title 'B', '-' with linespoints title 'C', '-' with linespoints title 'W0', '-' with linespoints title 'W1', '-' with linespoints title 'X', 
