@@ -1,4 +1,4 @@
-name: Locgic-Circuit-Simulator-DD1
+name: Logic-Circuit-Simulator-DD1
 on: [push]
 jobs:
   build:
@@ -12,15 +12,12 @@ jobs:
           mkdir cmake
           tar -xf cmake.zip -C cmake --strip-components=1
 
-      - name: Change to source directory
-        run: cd src
-
       - name: Configure CMake
         run: |
           mkdir build
           cd build
           cmake ..
-          
+
       - name: Build
         run: |
           cmake --build build
