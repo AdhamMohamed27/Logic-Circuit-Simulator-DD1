@@ -1,7 +1,7 @@
 import matplotlib.pyplot as plt
 
 # Function to read simulation output file
-def read_simulation_file(file_path):
+def read_simulation_file(file_path):   #The file path is the .sim file that the main program produces
     timestamps = []
     variables = {}
 
