@@ -12,7 +12,19 @@
 using namespace std;
 
 struct Component {
+<<<<<<< HEAD
     char input1,input2;
+=======
+
+//
+vector<bool> ins;
+bool out;
+string outputExpression;
+int delayPs;
+string gateType;
+//
+    string input1,input2;
+>>>>>>> 529729225e290ecdeab5052b0682ee8b35713a84
     string outputExpression;
     int delayPs;
     string gateType;
@@ -24,7 +36,7 @@ struct VariableValues {
 };
 
 // Function to safely convert string to integer
-int safe_stoi(const std::string& str) {
+int safe_stoi(string& str) {
     if (str.empty()) {
         throw std::invalid_argument("Empty string");
     }
@@ -45,7 +57,6 @@ string trim(const string& str) {
     }
     return str.substr(start, end - start + 1);
 }
-
 
 // Function to evaluate boolean expression
 #include <iostream>
@@ -139,7 +150,11 @@ bool evaluateExpressionWithInputs( string& expression, bool input1, bool input2,
 
 
 // Function to read library file and populate components map
+<<<<<<< HEAD
 void readLibraryFile(const string& filePath, unordered_map<string, Component>& components,unordered_map<string, int> &delays) {
+=======
+void readLibraryFile(const string& filePath, unordered_map<char, Component>& components, vector<string>& inputs,unordered_map<string, int> &delays) {
+>>>>>>> 529729225e290ecdeab5052b0682ee8b35713a84
     string line;
     int i=0;
     ifstream file(filePath);
@@ -169,7 +184,6 @@ void readLibraryFile(const string& filePath, unordered_map<string, Component>& c
 }
 
 // Function to read circuit file and populate gates map
-
 void readCircuitFile(const string& filePath, unordered_map<string, Component>& components,
                      unordered_map<string, string>& gates, vector<string>& inputs,unordered_map<string, int> delays,    unordered_map<string, unordered_set<string>> &dependencies
 ) {
