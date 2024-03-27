@@ -12,7 +12,7 @@
 using namespace std;
 
 struct Component {
-    string input1,input2;
+    char input1,input2;
     string outputExpression;
     int delayPs;
     string gateType;
@@ -20,7 +20,7 @@ struct Component {
 
 struct VariableValues {
     int timestamp;
-    unordered_map<string, int> variables;
+    unordered_map<char, int> variables;
 };
 
 // Function to safely convert string to integer
@@ -48,26 +48,98 @@ string trim(const string& str) {
 
 
 // Function to evaluate boolean expression
-bool evaluateExpression(bool input1, bool input2, const string& gate) {
-    if (gate == "AND2") {
-        return input1 && input2;
-    } else if (gate == "OR2") {
-        return input1 || input2;
-    } else if (gate == "NAND2") {
-        return !(input1 && input2);
-    } else if (gate == "NOR2") {
-        return !(input1 || input2);
-    } else if (gate == "XOR2") {
-        return (input1 || input2) && !(input1 && input2);
-    } else if (gate == "NOT") {
-        return !input1;
-    } else {
-        throw std::invalid_argument("Invalid gate type: " + gate);
+#include <iostream>
+#include <string>
+#include <stack>
+#include <map>
+
+using namespace std;
+
+bool evaluateExpression( string& expression, map<char, bool>& inputs) {
+    stack<bool> operands;
+    stack<char> operators;
+    for (int i = 0; i < inputs.size(); i++) {
+        size_t pos = expression.find("i" + to_string(i + 1));
+        while (pos != string::npos) {
+            string x;
+            x= (char)65+i;
+            expression.replace(pos, 2, x);
+            pos = expression.find("i" + to_string(i + 1), pos + 2);
+        }
     }
+    for (char c : expression) {
+        if (isalpha(c)) {
+            operands.push(inputs[c]);
+        } else if (c == '(') {
+            operators.push(c);
+        } else if (c == ')') {
+            while (!operators.empty() && operators.top() != '(') {
+                char op = operators.top();
+                operators.pop();
+                if (op == '~') {
+                    bool operand = operands.top();
+                    operands.pop();
+                    operands.push(!operand);
+                } else if (op == '|') {
+                    bool operand2 = operands.top();
+                    operands.pop();
+                    bool operand1 = operands.top();
+                    operands.pop();
+                    operands.push(operand1 || operand2);
+                } else if (op == '&') {
+                    bool operand2 = operands.top();
+                    operands.pop();
+                    bool operand1 = operands.top();
+                    operands.pop();
+                    operands.push(operand1 && operand2);
+                }
+            }
+            if (!operators.empty()) {
+                operators.pop(); // Remove '(' from stack
+            }
+        } else {
+            operators.push(c);
+        }
+    }
+
+    while (!operators.empty()) {
+        char op = operators.top();
+        operators.pop();
+        if (op == '~') {
+            bool operand = operands.top();
+            operands.pop();
+            operands.push(!operand);
+        } else if (op == '|') {
+            bool operand2 = operands.top();
+            operands.pop();
+            bool operand1 = operands.top();
+            operands.pop();
+            operands.push(operand1 || operand2);
+        } else if (op == '&') {
+            bool operand2 = operands.top();
+            operands.pop();
+            bool operand1 = operands.top();
+            operands.pop();
+            operands.push(operand1 && operand2);
+        }
+    }
+
+    return operands.top();
 }
 
+bool evaluateExpressionWithInputs( string& expression, bool input1, bool input2,bool input3) {
+    map<char, bool> inputs;
+    inputs['i'] = input1;
+    inputs['j'] = input2;
+    inputs['k']=input3;
+    return evaluateExpression(expression, inputs);
+}
+
+
+
+
 // Function to read library file and populate components map
-void readLibraryFile(const string& filePath, unordered_map<string, Component>& components, vector<string>& inputs,unordered_map<string, int> &delays) {
+void readLibraryFile(const string& filePath, unordered_map<string, Component>& components,unordered_map<string, int> &delays) {
     string line;
     int i=0;
     ifstream file(filePath);
@@ -84,7 +156,9 @@ void readLibraryFile(const string& filePath, unordered_map<string, Component>& c
                 int delay = safe_stoi(delayStr);
                 delays[name]=delay;
                 gateName = "G" + std::to_string(i);
-                components[gateName] = { in1,in2,outputExpr, delays[name],name};
+                char in1c=in1[0];
+                char in2c=in2[0];
+                components[gateName] = { in1c,in2c,outputExpr, delays[name],name};
                 i++;
             } catch (const std::invalid_argument& e) {
                 cerr << "Invalid argument in line: " << line << endl;
@@ -150,7 +224,7 @@ void readCircuitFile(const string& filePath, unordered_map<string, Component>& c
 
             // Store the inputs for each gate in the components map
 
-            components[gateName] = {input1, input2, outputName, delays[gateType], gateType};
+            components[gateName] = {input1[0], input2[0], outputName, delays[gateType], gateType};
 
             // Check if gateType exists in components map
             if (!input1.empty()) {
@@ -161,7 +235,7 @@ void readCircuitFile(const string& filePath, unordered_map<string, Component>& c
             }
 
             if (components.find(gateName) != components.end()) {
-                // Use gate's output name as key and gate's type as value
+                // Use gate's output name as key and gate's name as value
                 gates[outputName] = gateName;
             } else {
                 cerr << "Gate type '" << gateName << "' not found in components map." << endl;
@@ -183,7 +257,9 @@ void readSimulationFile(const string& filePath, vector<VariableValues>& simInput
     string line;
     while (getline(file, line)) {
         stringstream ss(line);
-        string timeStr, variable, valueStr;
+        string timeStr,  valueStr;
+        string variable;
+        char variablec;
         if (getline(ss, timeStr, ',') && getline(ss, variable, ',') && getline(ss, valueStr, ',')) {
             try {
                 int time = stoi(timeStr);
@@ -193,7 +269,7 @@ void readSimulationFile(const string& filePath, vector<VariableValues>& simInput
                 bool found = false;
                 for (auto& vv : simInputs) {
                     if (vv.timestamp == time) {
-                        vv.variables[variable] = value;
+                        vv.variables[variablec] = value;
                         found = true;
                         break;
                     }
@@ -203,7 +279,7 @@ void readSimulationFile(const string& filePath, vector<VariableValues>& simInput
                 if (!found) {
                     VariableValues vv;
                     vv.timestamp = time;
-                    vv.variables[variable] = value;
+                    vv.variables[variablec] = value;
                     simInputs.push_back(vv);
                 }
             } catch (const std::invalid_argument& e) {
@@ -215,16 +291,22 @@ void readSimulationFile(const string& filePath, vector<VariableValues>& simInput
 }
 
 void generateSimulationOutput(const unordered_map<string, string>& gates,  unordered_map<string, Component> components,
-                              vector<VariableValues>& simInputs, const string& outputPath, const vector<string>& inputs, unordered_map<string, unordered_set<string>> dependencies) {
+                              vector<VariableValues>& simInputs, const string& outputPath, unordered_map<string, unordered_set<string>> dependencies,vector<char>& inputs,vector<char>& inputc) {
     ofstream outputFile(outputPath);
     if (!outputFile.is_open()) {
         cerr << "Error opening output file: " << outputPath << endl;
         return;
     }
 
+    for (int i = 0; i < inputs.size(); i++) {
+        char x;
+        x=(char)65+i;
+        inputc[i]=x;
+
+    }
     // Initialize input values to 0
-    unordered_map<string, int> lastInputValues;
-    for (const auto& input : inputs) {
+    unordered_map<char, bool> lastInputValues;
+    for (const auto& input : inputc) {
         lastInputValues[input] = 0;
     }
 
@@ -246,7 +328,7 @@ void generateSimulationOutput(const unordered_map<string, string>& gates,  unord
     // Loop through each simulation input
     for (const auto& simInput : simInputs) {
         int timestamp = simInput.timestamp;
-        const unordered_map<string, int>& variables = simInput.variables;
+        const unordered_map<char, int>& variables = simInput.variables;
 
         unordered_set<string> outputNames;
 
@@ -255,7 +337,7 @@ void generateSimulationOutput(const unordered_map<string, string>& gates,  unord
         // Update input values if provided in the simulation inputs
         for (const auto& input : variables) {
 
-            const string& inputName = input.first;
+             char inputName = input.first;
             lastInputValues[inputName] = input.second;
 
         }
@@ -290,8 +372,9 @@ void generateSimulationOutput(const unordered_map<string, string>& gates,  unord
 
             bool input2Value = lastInputValues[component.input2];
 
+
             // Evaluate gate's expression based on the last known input values
-            bool result = evaluateExpression(input1Value, input2Value, component.gateType);
+            bool result = evaluateExpression(component.outputExpression,lastInputValues);
 
 
             if (dependencies.count(component.input1) > 0 || dependencies.count(component.input2) > 0) {
@@ -345,11 +428,15 @@ int main() {
     unordered_map<string, int> delays;;
     unordered_map<string, unordered_set<string>> dependencies;
 
-    readLibraryFile(lib, components, inputs,delays);
+    readLibraryFile(lib, components,delays);
     readCircuitFile(circ, components, gates, inputs,delays,dependencies);
     readSimulationFile(stim, simInputs);
 
     generateSimulationOutput(gates, components, simInputs,   sim,inputs,dependencies);
+    string expression = "(i&j)|(i&k)|(j&k)";
+    bool result = evaluateExpressionWithInputs(expression, false, false,false);
+    cout << "Result: " << result << endl;
+
 
 
     return 0;
