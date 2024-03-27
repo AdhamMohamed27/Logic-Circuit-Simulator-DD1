@@ -12,6 +12,14 @@
 using namespace std;
 
 struct Component {
+
+//
+vector<bool> ins;
+bool out;
+string outputExpression;
+int delayPs;
+string gateType;
+//
     string input1,input2;
     string outputExpression;
     int delayPs;
@@ -20,11 +28,11 @@ struct Component {
 
 struct VariableValues {
     int timestamp;
-    unordered_map<string, int> variables;
+    unordered_map<char, int> variables;
 };
 
 // Function to safely convert string to integer
-int safe_stoi(const std::string& str) {
+int safe_stoi(string& str) {
     if (str.empty()) {
         throw std::invalid_argument("Empty string");
     }
@@ -46,7 +54,6 @@ string trim(const string& str) {
     return str.substr(start, end - start + 1);
 }
 
-
 // Function to evaluate boolean expression
 bool evaluateExpression(bool input1, bool input2, const string& gate) {
     if (gate == "AND2") {
@@ -67,7 +74,7 @@ bool evaluateExpression(bool input1, bool input2, const string& gate) {
 }
 
 // Function to read library file and populate components map
-void readLibraryFile(const string& filePath, unordered_map<string, Component>& components, vector<string>& inputs,unordered_map<string, int> &delays) {
+void readLibraryFile(const string& filePath, unordered_map<char, Component>& components, vector<string>& inputs,unordered_map<string, int> &delays) {
     string line;
     int i=0;
     ifstream file(filePath);
@@ -95,7 +102,6 @@ void readLibraryFile(const string& filePath, unordered_map<string, Component>& c
 }
 
 // Function to read circuit file and populate gates map
-
 void readCircuitFile(const string& filePath, unordered_map<string, Component>& components,
                      unordered_map<string, string>& gates, vector<string>& inputs,unordered_map<string, int> delays,    unordered_map<string, unordered_set<string>> &dependencies
 ) {
