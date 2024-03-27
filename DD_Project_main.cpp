@@ -11,6 +11,11 @@
 
 using namespace std;
 
+struct input{
+    string name;
+    bool value;
+}
+
 struct Component {
 <<<<<<< HEAD
     char input1,input2;
@@ -66,20 +71,12 @@ string trim(const string& str) {
 
 using namespace std;
 
-bool evaluateExpression( string& expression, map<char, bool>& inputs) {
+bool evaluateExpression(string& expression, vector<input>& inputs) {
     stack<bool> operands;
     stack<char> operators;
-    for (int i = 0; i < inputs.size(); i++) {
-        size_t pos = expression.find("i" + to_string(i + 1));
-        while (pos != string::npos) {
-            string x;
-            x= (char)65+i;
-            expression.replace(pos, 2, x);
-            pos = expression.find("i" + to_string(i + 1), pos + 2);
-        }
-    }
+
     for (char c : expression) {
-        if (isalpha(c)) {
+        if (isdigit(c)) {
             operands.push(inputs[c]);
         } else if (c == '(') {
             operators.push(c);
