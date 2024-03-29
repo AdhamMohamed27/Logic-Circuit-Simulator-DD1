@@ -1,7 +1,7 @@
 #include <iostream>
 #include <fstream>
-#include <unordered_map>
-#include <unordered_set>
+#include <map>
+#include <set>
 #include <string>
 #include <sstream>
 #include <cctype>
@@ -12,7 +12,7 @@
 using namespace std;
 
 struct Component {
-    vector<string>inputs;
+    vector<string> inputs;
     string outputExpression;
     int delayPs;
     string gateType;
@@ -21,7 +21,7 @@ struct Component {
 
 struct VariableValues {
     int timestamp;
-    unordered_map<string, int> variables;
+    map<string, int> variables;
 };
 
 // Function to safely convert string to integer
@@ -47,26 +47,20 @@ string trim(const string& str) {
     return str.substr(start, end - start + 1);
 }
 
-
-// Function to evaluate boolean expression
-
-
-using namespace std;
-
-bool evaluateExpression( string& expression,vector<bool>& inputs) {
+bool evaluateExpression(string& expression, vector<bool>& inputs) {
     stack<bool> operands;
     stack<char> operators;
     for (int i = 0; i < expression.size(); i++) {
         size_t pos = expression.find("i" + to_string(i + 1));
         while (pos != string::npos) {
             string x;
-            x=char(65+i);
+            x = char(65 + i);
             expression.replace(pos, 2, x);
             pos = expression.find("i" + to_string(i + 1), pos + 2);
         }
     }
     for (char c : expression) {
-        int i=0;
+        int i = 0;
         if (isalpha(c)) {
             operands.push(inputs[i]);
             i++;
@@ -127,16 +121,10 @@ bool evaluateExpression( string& expression,vector<bool>& inputs) {
     return operands.top();
 }
 
-
-
-
-
-
-
 // Function to read library file and populate components map
-void readLibraryFile(const string& filePath, unordered_map<string, Component>& components,unordered_map<string, int> &delays) {
+void readLibraryFile(const string& filePath, map<string, Component>& components, map<string, int>& delays) {
     string line;
-    int i=0;
+    int i = 0;
     ifstream file(filePath);
     if (!file.is_open()) {
         cerr << "Error opening library file: " << filePath << endl;
@@ -144,18 +132,18 @@ void readLibraryFile(const string& filePath, unordered_map<string, Component>& c
     }
     while (getline(file, line)) {
         stringstream ss(line);
-        string name, numInputsStr, outputExpr, delayStr,in1,in2,gateName;
+        string name, numInputsStr, outputExpr, delayStr, in1, in2, gateName;
         if (getline(ss, name, ',') && getline(ss, numInputsStr, ',') &&
             getline(ss, outputExpr, ',') && getline(ss, delayStr, ',')) {
             try {
                 int delay = safe_stoi(delayStr);
-                delays[name]=delay;
+                delays[name] = delay;
                 gateName = "G" + std::to_string(i);
 
-                components[gateName].numofinputs= safe_stoi(numInputsStr);
+                components[gateName].numofinputs = safe_stoi(numInputsStr);
                 components[gateName].outputExpression = outputExpr;
-                components[gateName].delayPs=delays[name];
-                components[gateName].gateType=name;
+                components[gateName].delayPs = delays[name];
+                components[gateName].gateType = name;
 
                 i++;
             } catch (const std::invalid_argument& e) {
@@ -167,10 +155,8 @@ void readLibraryFile(const string& filePath, unordered_map<string, Component>& c
 }
 
 // Function to read circuit file and populate gates map
-
-void readCircuitFile(const string& filePath, unordered_map<string, Component>& components,
-                     unordered_map<string, string>& gates, vector<string>& inputs,unordered_map<string, int> delays,    unordered_map<string, unordered_set<string>> &dependencies
-) {
+void readCircuitFile(const string& filePath, map<string, Component>& components,
+                     map<string, string>& gates, vector<string>& inputs, map<string, int>& delays, map<string, set<string>>& dependencies) {
     ifstream file(filePath);
     if (!file.is_open()) {
         cerr << "Error opening circuit file: " << filePath << endl;
@@ -199,49 +185,39 @@ void readCircuitFile(const string& filePath, unordered_map<string, Component>& c
         } else {
             stringstream ss(line);
 
-            string gateName, gateType, outputName, input1, input2;
+            string gateName, gateType, outputName, input;
             getline(ss, gateName, ',');
             getline(ss, gateType, ',');
             gateType = trim(gateType);
             getline(ss, outputName, ',');
-            // Read inputs until the end of the line
-            string input;
-            while (getline(ss, input, ',')) {
-                input = trim(input);
-                components[gateName].inputs.push_back(input);
-                inputs.push_back(input);
-            }
-
-
             gateName = trim(gateName);
             gateType = trim(gateType);
             outputName = trim(outputName);
-
+            for (int i = 0; i < components[gateName].numofinputs; i++) {
+                getline(ss, input, ',');
+                input = trim(input);
+                components[gateName].inputs.push_back(input);
+            }
 
             // Store the inputs for each gate in the components map
-
-
             components[gateName].delayPs = delays[gateType];
             components[gateName].gateType = gateType;
 
-
-for(int i=0;i<components[gateName].numofinputs;i++) {
-    // Check if gateType exists in components map
-
-    dependencies[outputName].insert(components[gateName].inputs.at(i));
-}
+            for (int i = 0; i < components[gateName].numofinputs; i++) {
+                // Check if gateType exists in components map
+                dependencies[gateType].insert(components[gateName].inputs.at(i));
+            }
 
             if (components.find(gateName) != components.end()) {
                 // Use gate's output name as key and gate's name as value
                 gates[outputName] = gateName;
             } else {
                 cerr << "Gate type '" << gateName << "' not found in components map." << endl;
-            }}
-
+            }
+        }
     }
     file.close();
 }
-
 
 // Function to read simulation file and populate simInputs vector
 void readSimulationFile(const string& filePath, vector<VariableValues>& simInputs) {
@@ -285,8 +261,8 @@ void readSimulationFile(const string& filePath, vector<VariableValues>& simInput
     file.close();
 }
 
-void generateSimulationOutput(const unordered_map<string, string>& gates,  unordered_map<string, Component> components,
-                              vector<VariableValues>& simInputs, const string& outputPath, const vector<string>& inputs, unordered_map<string, unordered_set<string>> dependencies) {
+void generateSimulationOutput(const map<string, string>& gates, map<string, Component>& components,
+                              vector<VariableValues>& simInputs, const string& outputPath, const vector<string>& inputs, map<string, set<string>>& dependencies) {
     ofstream outputFile(outputPath);
     if (!outputFile.is_open()) {
         cerr << "Error opening output file: " << outputPath << endl;
@@ -294,147 +270,108 @@ void generateSimulationOutput(const unordered_map<string, string>& gates,  unord
     }
 
     // Initialize input values to 0
-    unordered_map<string, bool> lastInputValues;
+    map<string, bool> lastInputValues;
     for (const auto& input : inputs) {
-        lastInputValues[input] = 0;
+        lastInputValues[input] = false;
     }
 
     // Vector to store the order of components
-    vector<string> componentOrder;
-
-    std::vector<std::string> keys;
+    vector<string> keys;
     keys.reserve(gates.size());
     for (const auto& gate : gates) {
         keys.push_back(gate.first);
-
     }
 
-// Iterate over keys vector in reverse and populate componentOrder in reverse
-    std::for_each(keys.rbegin(), keys.rend(), [&componentOrder](const auto& key) {
-        componentOrder.push_back(key);
-
-    });
     // Loop through each simulation input
     for (const auto& simInput : simInputs) {
         int timestamp = simInput.timestamp;
-        const unordered_map<string, int>& variables = simInput.variables;
+        const map<string, int>& variables = simInput.variables;
 
-        unordered_set<string> outputNames;
-
-        vector<bool>inputsvalues;
-inputsvalues.clear();
         // Update input values if provided in the simulation inputs
         for (const auto& input : variables) {
-
             const string& inputName = input.first;
             lastInputValues[inputName] = input.second;
-
         }
 
         // Output the values of inputs
         for (const auto& input : inputs) {
-
             int inputValue = lastInputValues[input];
-
             outputFile << timestamp << "," << input << "," << inputValue << endl;
-
         }
 
-        int  time;
+        set<string> outputNames;
 
-        for ( auto& componentName : componentOrder) {
-            Component component;
-             string outputName = componentName;
-             string gateType = gates.at(componentName);
-            auto it = components.find(gateType);
-            if (it != components.end()) {
-                 component = it->second;
-
-
-            } else {
-                // Handle the case where `gateType` is not found in components
-                cerr << "Gate type '" << gateType << "' not found in components map." << endl;
-            }
+        // Loop through each gate
+        // Loop through each gate
+        for (auto& componentName : keys) {
+            Component& component = components[gates.at(componentName)];
 
             // Get input values for the gate
-            for(int i=0;i<component.inputs.size();i++){
-
-                inputsvalues.push_back(lastInputValues[component.inputs.at(i)]);
+            vector<bool> inputsValues;
+            for (const string& input : components[gates.at(componentName)].inputs) {
+                inputsValues.push_back(lastInputValues[input]);
             }
 
-
+            // Print out input values for debugging
+            cout << "Input values for gate " << componentName << ": ";
+            for (bool inputValue : inputsValues) {
+                cout << inputValue << " ";
+            }
+            cout << endl;
 
             // Evaluate gate's expression based on the last known input values
-            bool result = evaluateExpression(component.outputExpression,inputsvalues);
+            bool result = evaluateExpression(component.outputExpression, inputsValues);
+            inputsValues.clear();
 
-            bool dependent =false;
+            bool dependent = false;
 
-            for(int i = 0; i < component.numofinputs; ++i) {
-                if (dependencies[outputName].count(component.inputs[i])>0) {
-
-                    // Calculate delay for the current component considering dependencies
-                    dependent=true;
-
+            // Check if the gate has any dependencies
+            for (int i = 0; i < component.numofinputs; ++i) {
+                if (dependencies[component.gateType].count(component.inputs[i]) > 0) {
+                    dependent = true;
                 }
             }
-            if(dependent){
+
+            // If gate has dependencies, update timestamp and output value accordingly
+            if (dependent) {
                 timestamp += component.delayPs;
-
-                outputFile << timestamp << "," << outputName << "," << result << endl;
+                outputFile << timestamp << "," << componentName << "," << result << endl;
+                lastInputValues[componentName] = result;
+                outputNames.insert(componentName);
             }
-            else{
-            time=timestamp+component.delayPs;
-            outputFile << time << "," << outputName << "," << result << endl;}
-            lastInputValues[outputName] = result;
-            outputNames.insert(outputName);
-// Output the value of the gate with delay
+        }
 
-
-// Update the last input values with the calculated input
-
-
-        } }
-
-
+    }
 
     outputFile.close();
 }
 
-
-
-
 int main() {
+    string libFilePath;
+    string circuitFilePath;
+    string stimFilePath;
+    string simFilePath;
 
-    string folderPath;
-    string lib;
-    string circ;
-    string stim;
-    string sim;
-    vector<int> timestamps;
-
-    cout<<"Enter library file path: ";
-    getline(cin,lib);
-    cout<<"Enter Circuit file path: ";
-  getline(cin,circ);
-    cout<<"Enter stim file path: ";
-    getline(cin,stim);
-    cout<<"Enter sim file path: ";
-    getline(cin,sim);
+    cout << "Enter library file path: ";
+    getline(cin, libFilePath);
+    cout << "Enter circuit file path: ";
+    getline(cin, circuitFilePath);
+    cout << "Enter simulation file path: ";
+    getline(cin, stimFilePath);
+    cout << "Enter output file path: ";
+    getline(cin, simFilePath);
 
     vector<string> inputs;
-    unordered_map<string, Component> components;
-    unordered_map<string, string> gates;
+    map<string, Component> components;
+    map<string, string> gates;
     vector<VariableValues> simInputs;
-    unordered_map<string, int> delays;;
-    unordered_map<string, unordered_set<string>> dependencies;
+    map<string, int> delays;
+    map<string, set<string>> dependencies;
 
-    readLibraryFile(lib, components,delays);
-    readCircuitFile(circ, components, gates, inputs,delays,dependencies);
-    readSimulationFile(stim, simInputs);
-
-    generateSimulationOutput(gates, components, simInputs,   sim,inputs,dependencies);
-
+    readLibraryFile(libFilePath, components, delays);
+    readCircuitFile(circuitFilePath, components, gates, inputs, delays, dependencies);
+    readSimulationFile(stimFilePath, simInputs);
+    generateSimulationOutput(gates, components, simInputs, simFilePath, inputs, dependencies);
 
     return 0;
 }
-
