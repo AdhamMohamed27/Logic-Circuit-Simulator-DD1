@@ -151,8 +151,7 @@ void readLibraryFile(const string& filePath, unordered_map<string, Component>& c
                 int delay = safe_stoi(delayStr);
                 delays[name]=delay;
                 gateName = "G" + std::to_string(i);
-                components[gateName].inputs.push_back(in1);
-                components[gateName].inputs.push_back(in2);
+
                 components[gateName].numofinputs= safe_stoi(numInputsStr);
                 components[gateName].outputExpression = outputExpr;
                 components[gateName].delayPs=delays[name];
@@ -204,27 +203,24 @@ void readCircuitFile(const string& filePath, unordered_map<string, Component>& c
             getline(ss, gateName, ',');
             getline(ss, gateType, ',');
             gateType = trim(gateType);
-            if (gateType == "NOT") {
-                // NOT gate only has one input
-                getline(ss, outputName, ',');
-                getline(ss, input1, ',');
-
-            } else {
-                getline(ss, outputName, ',');
-                getline(ss, input1, ',');
-                getline(ss, input2, ',');
+            getline(ss, outputName, ',');
+            // Read inputs until the end of the line
+            string input;
+            while (getline(ss, input, ',')) {
+                input = trim(input);
+                components[gateName].inputs.push_back(input);
+                inputs.push_back(input);
             }
+
 
             gateName = trim(gateName);
             gateType = trim(gateType);
             outputName = trim(outputName);
-            input1 = trim(input1);
-            input2 = trim(input2);
+
 
             // Store the inputs for each gate in the components map
 
-            components[gateName].inputs.push_back(input1);
-            components[gateName].inputs.push_back(input2);
+
             components[gateName].delayPs = delays[gateType];
             components[gateName].gateType = gateType;
 
@@ -341,6 +337,7 @@ inputsvalues.clear();
             int inputValue = lastInputValues[input];
 
             outputFile << timestamp << "," << input << "," << inputValue << endl;
+
         }
 
         int  time;
