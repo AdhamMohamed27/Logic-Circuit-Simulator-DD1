@@ -8,7 +8,7 @@ int main() {
     unordered_map<string, int> lastInputValues;
 
     readCircuitFile(folderPath + "/T5.cir", components, gates, inputs);
-    cout << "Gates:" << endl;
+
     for (const auto& gate : gates) {
 
     }

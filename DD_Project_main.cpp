@@ -15,8 +15,13 @@ struct Component {
     vector<string> inputs;
     string outputExpression;
     int delayPs;
-    string gateType;
+  //  string gateType;
     int numofinputs;
+};
+struct ComponentC {
+    Component c;
+    string gateType;
+    string output;
 };
 
 struct VariableValues {
@@ -137,13 +142,14 @@ void readLibraryFile(const string& filePath, map<string, Component>& components,
             getline(ss, outputExpr, ',') && getline(ss, delayStr, ',')) {
             try {
                 int delay = safe_stoi(delayStr);
+                name= trim(name);
                 delays[name] = delay;
-                gateName = "G" + std::to_string(i);
+                int num= safe_stoi(numInputsStr);
 
-                components[gateName].numofinputs = safe_stoi(numInputsStr);
-                components[gateName].outputExpression = outputExpr;
-                components[gateName].delayPs = delays[name];
-                components[gateName].gateType = name;
+                components[name].numofinputs = safe_stoi(numInputsStr);
+                components[name].outputExpression = outputExpr;
+                components[name].delayPs = delays[name];
+                components[name].numofinputs = num;
 
                 i++;
             } catch (const std::invalid_argument& e) {
@@ -155,7 +161,7 @@ void readLibraryFile(const string& filePath, map<string, Component>& components,
 }
 
 // Function to read circuit file and populate gates map
-void readCircuitFile(const string& filePath, map<string, Component>& components,
+void readCircuitFile(const string& filePath, map<string, Component>& components,map<string, ComponentC>& componentsc,
                      map<string, string>& gates, vector<string>& inputs, map<string, int>& delays, map<string, set<string>>& dependencies) {
     ifstream file(filePath);
     if (!file.is_open()) {
@@ -193,26 +199,29 @@ void readCircuitFile(const string& filePath, map<string, Component>& components,
             gateName = trim(gateName);
             gateType = trim(gateType);
             outputName = trim(outputName);
-            for (int i = 0; i < components[gateName].numofinputs; i++) {
+            auto it = components.find(gateType);
+            if (it != components.end()) {
+
+
+            componentsc[gateName].c=components[gateType];
+            componentsc[gateName].output=outputName;
+            for (int i = 0; i < componentsc[gateName].c.numofinputs; i++) {
                 getline(ss, input, ',');
                 input = trim(input);
-                components[gateName].inputs.push_back(input);
+                componentsc[gateName].c.inputs.push_back(input);
             }
 
             // Store the inputs for each gate in the components map
-            components[gateName].delayPs = delays[gateType];
-            components[gateName].gateType = gateType;
+            componentsc[gateName].c.delayPs = delays[gateType];
+            componentsc[gateName].gateType = gateType;
 
-            for (int i = 0; i < components[gateName].numofinputs; i++) {
+            for (int i = 0; i < componentsc[gateName].c.numofinputs; i++) {
                 // Check if gateType exists in components map
-                dependencies[gateType].insert(components[gateName].inputs.at(i));
-            }
+                dependencies[outputName].insert(componentsc[gateName].c.inputs.at(i));
+            }gates[outputName] = gateName;}
 
-            if (components.find(gateName) != components.end()) {
-                // Use gate's output name as key and gate's name as value
-                gates[outputName] = gateName;
-            } else {
-                cerr << "Gate type '" << gateName << "' not found in components map." << endl;
+           else {
+                cerr << "Gate type '" << gateType << "' not found in components map." << endl;
             }
         }
     }
@@ -261,7 +270,7 @@ void readSimulationFile(const string& filePath, vector<VariableValues>& simInput
     file.close();
 }
 
-void generateSimulationOutput(const map<string, string>& gates, map<string, Component>& components,
+void generateSimulationOutput(const map<string, string>& gates, map<string, ComponentC>& componentsc,
                               vector<VariableValues>& simInputs, const string& outputPath, const vector<string>& inputs, map<string, set<string>>& dependencies) {
     ofstream outputFile(outputPath);
     if (!outputFile.is_open()) {
@@ -279,7 +288,7 @@ void generateSimulationOutput(const map<string, string>& gates, map<string, Comp
     vector<string> keys;
     keys.reserve(gates.size());
     for (const auto& gate : gates) {
-        keys.push_back(gate.first);
+        keys.push_back(gate.second);
     }
 
     // Loop through each simulation input
@@ -304,20 +313,16 @@ void generateSimulationOutput(const map<string, string>& gates, map<string, Comp
         // Loop through each gate
         // Loop through each gate
         for (auto& componentName : keys) {
-            Component& component = components[gates.at(componentName)];
+            Component& component = componentsc[componentName].c;
 
             // Get input values for the gate
             vector<bool> inputsValues;
-            for (const string& input : components[gates.at(componentName)].inputs) {
+            for (const string& input : componentsc[componentName].c.inputs) {
                 inputsValues.push_back(lastInputValues[input]);
             }
 
             // Print out input values for debugging
-            cout << "Input values for gate " << componentName << ": ";
-            for (bool inputValue : inputsValues) {
-                cout << inputValue << " ";
-            }
-            cout << endl;
+
 
             // Evaluate gate's expression based on the last known input values
             bool result = evaluateExpression(component.outputExpression, inputsValues);
@@ -327,7 +332,7 @@ void generateSimulationOutput(const map<string, string>& gates, map<string, Comp
 
             // Check if the gate has any dependencies
             for (int i = 0; i < component.numofinputs; ++i) {
-                if (dependencies[component.gateType].count(component.inputs[i]) > 0) {
+                if (dependencies[componentsc[componentName].output].count(component.inputs[i]) > 0) {
                     dependent = true;
                 }
             }
@@ -335,7 +340,7 @@ void generateSimulationOutput(const map<string, string>& gates, map<string, Comp
             // If gate has dependencies, update timestamp and output value accordingly
             if (dependent) {
                 timestamp += component.delayPs;
-                outputFile << timestamp << "," << componentName << "," << result << endl;
+                outputFile << timestamp << "," << componentsc[componentName].output<< "," << result << endl;
                 lastInputValues[componentName] = result;
                 outputNames.insert(componentName);
             }
@@ -363,15 +368,16 @@ int main() {
 
     vector<string> inputs;
     map<string, Component> components;
+    map<string, ComponentC> componentsc;
     map<string, string> gates;
     vector<VariableValues> simInputs;
     map<string, int> delays;
     map<string, set<string>> dependencies;
 
     readLibraryFile(libFilePath, components, delays);
-    readCircuitFile(circuitFilePath, components, gates, inputs, delays, dependencies);
+    readCircuitFile(circuitFilePath, components,componentsc, gates, inputs, delays, dependencies);
     readSimulationFile(stimFilePath, simInputs);
-    generateSimulationOutput(gates, components, simInputs, simFilePath, inputs, dependencies);
+    generateSimulationOutput(gates, componentsc, simInputs, simFilePath, inputs, dependencies);
 
     return 0;
 }
