@@ -44,7 +44,7 @@ def plot_waveforms(timestamps, variables):
 
 # Main function
 def main():
-    file_path = "D:\\spring 24\\DD1 project\\Logic-Circuit-Simulator-DD1\\Test_Case_5\\T5.sim"
+    file_path = "D:\spring 24\DD1 project\Logic-Circuit-Simulator-DD1\Test_Cases\Test_Case_2\T2.sim"
     timestamps, variables = read_simulation_file(file_path)
     plot_waveforms(timestamps, variables)
 

@@ -197,7 +197,6 @@ void readCircuitFile(const string& filePath, map<string, Component>& components,
             gateType = trim(gateType);
             getline(ss, outputName, ',');
             gateName = trim(gateName);
-            gateType = trim(gateType);
             outputName = trim(outputName);
             auto it = components.find(gateType);
             if (it != components.end()) {
@@ -221,7 +220,7 @@ void readCircuitFile(const string& filePath, map<string, Component>& components,
             }gates[outputName] = gateName;}
 
            else {
-                cerr << "Gate type '" << gateType << "' not found in components map." << endl;
+                cerr << "Gate type '" << gateType << "' not found in library file." << endl;
             }
         }
     }
@@ -300,6 +299,8 @@ void generateSimulationOutput(const map<string, string>& gates, map<string, Comp
         for (const auto& input : variables) {
             const string& inputName = input.first;
             lastInputValues[inputName] = input.second;
+            cout<<inputName<<input.second;
+
         }
 
         // Output the values of inputs
@@ -310,8 +311,6 @@ void generateSimulationOutput(const map<string, string>& gates, map<string, Comp
 
         set<string> outputNames;
 
-        // Loop through each gate
-        // Loop through each gate
         for (auto& componentName : keys) {
             Component& component = componentsc[componentName].c;
 
@@ -338,12 +337,12 @@ void generateSimulationOutput(const map<string, string>& gates, map<string, Comp
             }
 
             // If gate has dependencies, update timestamp and output value accordingly
-            if (dependent) {
-                timestamp += component.delayPs;
-                outputFile << timestamp << "," << componentsc[componentName].output<< "," << result << endl;
-                lastInputValues[componentName] = result;
-                outputNames.insert(componentName);
-            }
+          if (dependent) {
+              timestamp += component.delayPs;
+              outputFile << timestamp << "," << componentsc[componentName].output << "," << result << endl;
+              lastInputValues[componentName] = result;
+              outputNames.insert(componentName);
+          }
         }
 
     }
@@ -351,20 +350,18 @@ void generateSimulationOutput(const map<string, string>& gates, map<string, Comp
     outputFile.close();
 }
 
-int main() {
-    string libFilePath;
-    string circuitFilePath;
-    string stimFilePath;
-    string simFilePath;
+int main(int argc, char* argv[]){
+    if (argc < 5) {
+        cerr << "Usage: " << argv[0] << " input_file1 input_file2 input_file3 output_file" << endl;
+        return 1; // Return error code
+    }
 
-    cout << "Enter library file path: ";
-    getline(cin, libFilePath);
-    cout << "Enter circuit file path: ";
-    getline(cin, circuitFilePath);
-    cout << "Enter simulation file path: ";
-    getline(cin, stimFilePath);
-    cout << "Enter output file path: ";
-    getline(cin, simFilePath);
+    string libFilePath=argv[1];
+    string circuitFilePath=argv[2];
+    string stimFilePath=argv[3];
+    string simFilePath=argv[4];
+
+
 
     vector<string> inputs;
     map<string, Component> components;
